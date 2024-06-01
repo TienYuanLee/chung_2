@@ -1,4 +1,0 @@
-Flask==2.0.3
-line-bot-sdk==1.18.0
-selenium==4.1.0
-beautifulsoup4==4.10.0
