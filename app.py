@@ -11,7 +11,7 @@ from pyppeteer import launch
 app = Flask(__name__)
 
 # Your Line Bot's Channel Access Token and Channel Secret
-LINE_CHANNEL_ACCESS_TOKEN = 'W1iFrhuHEPdo8z9ewYqvRKCyFjHWlrlqHkoaJ98nO7diOjgiBPlIrPJqmGJhjj4mOVKNxhSLbW0AYvDc0WsAJZ7IymPR1rvvlP8jyXLwo6aZUyAtnkIhD5t15U5kLVX/qW94ubH5WSyhpPnhLvxzywdB04t89/1O/w1cDnyilFU='
+LINE_CHANNEL_ACCESS_TOKEN = 'm32wmTrp6+GmquKZ7Mhu5cNobYnvEzjn2A/2Sr8KpbvUMJnKWHYP0ZYbwo14hXODOVKNxhSLbW0AYvDc0WsAJZ7IymPR1rvvlP8jyXLwo6Yj/uDuOkYKwAFYhPmFKWyUv06t+2cVYFH8RYLA8kCmoQdB04t89/1O/w1cDnyilFU='
 LINE_CHANNEL_SECRET = 'd5cd857c17c8ff9466f3f7817a5980b8'
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
