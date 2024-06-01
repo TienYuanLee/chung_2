@@ -107,12 +107,28 @@ def callback():
         abort(400)
     return 'OK'
 
+# @handler.add(MessageEvent, message=TextMessage)
+# def handle_message(event):
+#     ingredient = event.message.text
+#     if ingredient.lower() == "不知道":
+#         response_text = "請輸入一個食材來搜尋食譜。"
+#     else:
+#         original_html = get_search_results(ingredient)
+#         top_recipes, results = get_result(original_html, ingredient)
+#         response_text = "\n".join(results[:5])
+#     line_bot_api.reply_message(
+#         event.reply_token,
+#         TextSendMessage(text=response_text)
+#     )
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     ingredient = event.message.text
+    app.logger.info(f"Received message: {ingredient}")
+    
     if ingredient.lower() == "不知道":
         response_text = "請輸入一個食材來搜尋食譜。"
     else:
+        app.logger.info("Searching for recipes...")
         original_html = get_search_results(ingredient)
         top_recipes, results = get_result(original_html, ingredient)
         response_text = "\n".join(results[:5])
@@ -120,6 +136,7 @@ def handle_message(event):
         event.reply_token,
         TextSendMessage(text=response_text)
     )
+    app.logger.info("Message handled successfully")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, use_reloader=False)
