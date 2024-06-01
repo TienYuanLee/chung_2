@@ -16,7 +16,7 @@ LINE_CHANNEL_SECRET = 'd5cd857c17c8ff9466f3f7817a5980b8'
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-async def search(ingredient):
+async def search(ingredient, loop):
     browser = await launch(headless=True, args=['--no-sandbox'])
     page = await browser.newPage()
     await page.goto("https://icook.tw/")
@@ -28,7 +28,9 @@ async def search(ingredient):
     return content
 
 def get_search_results(ingredient):
-    return asyncio.get_event_loop().run_until_complete(search(ingredient))
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    return loop.run_until_complete(search(ingredient, loop))
 
 def progress_bar(percentage, length):
     if percentage < 0:
