@@ -3,15 +3,10 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup
-
 import os
+import asyncio
+from pyppeteer import launch
 
 app = Flask(__name__)
 
@@ -22,20 +17,19 @@ LINE_CHANNEL_SECRET = 'd5cd857c17c8ff9466f3f7817a5980b8'
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-# WebDriver settings
-driver = webdriver.Chrome(ChromeDriverManager().install())
+async def search(ingredient):
+    browser = await launch(headless=True, args=['--no-sandbox'])
+    page = await browser.newPage()
+    await page.goto("https://icook.tw/")
+    await page.type(".search-input", ingredient)
+    await page.keyboard.press("Enter")
+    await page.waitForSelector(".browse-recipe-card")
+    content = await page.content()
+    await browser.close()
+    return content
 
-def search(ingredient):
-    url = "https://icook.tw/"
-    driver.get(url)
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "search-input")))
-    search_box = driver.find_element(By.CLASS_NAME, "search-input")
-    search_box.clear()
-    search_box.send_keys(ingredient)
-    search_box.send_keys(Keys.RETURN)
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "browse-recipe-card")))
-    original_html = driver.page_source
-    return original_html
+def get_search_results(ingredient):
+    return asyncio.run(search(ingredient))
 
 def progress_bar(percentage, length):
     if percentage < 0:
@@ -75,11 +69,13 @@ def get_result(original_html, search_ingredient):
                     "link": f"https://icook.tw{link}"
                 })
         try:
-            next_button = driver.find_element(By.CSS_SELECTOR, 'li.pagination-tab.page--next a.pagination-tab-link')
-            next_button.click()
-            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "browse-recipe-card")))
-            original_html = driver.page_source
-            soup = BeautifulSoup(original_html, "html.parser")
+            next_button = soup.select_one('li.pagination-tab.page--next a.pagination-tab-link')
+            if next_button:
+                next_button.click()
+                content = asyncio.run(search(ingredient))
+                soup = BeautifulSoup(content, "html.parser")
+            else:
+                break
         except Exception as e:
             break
     recipe_list.sort(key=lambda x: x["likes"], reverse=True)
@@ -102,19 +98,13 @@ def get_result(original_html, search_ingredient):
 
 @app.route("/callback", methods=['POST'])
 def callback():
-    # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
-
-    # get request body as text
     body = request.get_data(as_text=True)
     app.logger.info("Request body: " + body)
-
-    # handle webhook body
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
-
     return 'OK'
 
 @handler.add(MessageEvent, message=TextMessage)
@@ -123,16 +113,13 @@ def handle_message(event):
     if ingredient.lower() == "不知道":
         response_text = "請輸入一個食材來搜尋食譜。"
     else:
-        original_html = search(ingredient)
+        original_html = get_search_results(ingredient)
         top_recipes, results = get_result(original_html, ingredient)
-        response_text = "\n".join(results[:5])  # 只顯示前5個結果
-    
+        response_text = "\n".join(results[:5])
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=response_text)
     )
-
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
