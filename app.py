@@ -16,6 +16,7 @@ LINE_CHANNEL_SECRET = 'd5cd857c17c8ff9466f3f7817a5980b8'
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
+line_bot_api.push_message('U6a9e45ef42f84e15883c1dd23c20badd',TextSendMessage(text='連接成功'))
 
 async def search(ingredient):
     browser = await launch(headless=True, args=['--no-sandbox'])
